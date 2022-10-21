@@ -1,0 +1,56 @@
+# This is a basic workflow to test GitHub Actions functions
+
+name: scheduled_run_demo
+
+# Controls when the workflow will run
+on:
+  # Triggers the workflow on push or pull request events but only for the "main" branch
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+  schedule:
+    - cron: '55 4,16 * * *'
+
+  # Allows you to run this workflow manually from the Actions tab 
+  workflow_dispatch:
+
+# A workflow run is made up of one or more jobs that can run sequentially or in parallel
+jobs:
+  # This workflow contains a single job called "scheduled_run"
+  scheduled_run:
+    name: scheduled_run
+    # The type of runner that the job will run on
+    runs-on: self-hosted
+
+    # Steps represent a sequence of tasks that will be executed as part of the job
+    steps:
+      # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
+      - uses: actions/checkout@v3
+
+      # Runs a single command using the runners shell
+      - name: Print Hello
+        run: echo Hello, world!
+        
+      # List env variables
+      - name: Print Env
+        run: printenv   
+      
+      # Install python 3 - Hello!
+      - name: Get Python
+        uses: actions/setup-python@v4
+
+      # Install dbt
+      - name: Install dbt
+        run: |
+          pip install dbt-redshift
+          pip install dbt-core==1.2.1
+      
+      # Somewhere near here need to invoke secrets... connect via AWS EC2 instance that runs Docker...
+  
+      # Run command to TEST 26 record table:
+      - name: Run 26 record table
+        env:
+          S_P_REDSHIFT_DBT_USER: ${{ secrets.S_P_REDSHIFT_DBT_USER }}
+          S_P_REDSHIFT_DBT_PW: ${{ secrets.S_P_REDSHIFT_DBT_PW }}
+        run: dbt test -m staging_dsse_outbound_mail_sales_plan_versions --target prod --profiles-dir .
